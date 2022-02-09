@@ -1,4 +1,3 @@
-from hashlib import new
 import json
 import os
 import sys
@@ -24,8 +23,8 @@ class Map_Control:
     def __init__(self,MAP_SIZE):
         self.MAP_SIZE = MAP_SIZE
 
-    def generate(self,MAP_SIZE,p_xy):#プレイヤーの座標
-        map_data = [["+" for i in range(MAP_SIZE[0])] for i in range(MAP_SIZE)[1]]
+    def generate(self,p_xy):#プレイヤーの座標
+        map_data = [["+" for i in range(self.MAP_SIZE[0])] for raw in range(self.MAP_SIZE[1])]
         map_data = self.add_entity(map_data,"p",p_xy)
         
         return map_data
@@ -47,25 +46,43 @@ class Map_Control:
 
         return map_data
     
-    def load(self,state_data,map_data=None):
+    def load(self,state_data=None): #新規作成ならstate_dataには引数を渡さない
 
-        if state_data == "new":
-            state_data = [
-                self.xy_generator(self.MAP_SIZE),
-                [self.xy_generator(self.MAP_SIZE) for i in range(3)],
-                [self.xy_generator(self.MAP_SIZE) for i in range(3)]
-            ]
+        if state_data == None:
+            state_data = self.create_new_states()
         
-        map_data = self.generate(self.MAP_SIZE,state_data[0])
+        map_data = self.generate(state_data[0])
         
         for xy in state_data[1]:
-            self.add_entity(map_data,"e",xy)
-            
+            map_data = self.add_entity(map_data,"e",xy)
+        
+        for xy in state_data[2]:
+            map_data = self.add_entity(map_data,"i",xy)
+        
+        return map_data
 
-    def xy_generator(self,map_size): #x,yの上限
-        xy = [random.randrange(map_size[0]),random.randrange(map_size[1])]
-
+    def xy_generator(self): #x,yの上限
+        xy = [random.randrange(self.MAP_SIZE[0]),random.randrange(self.MAP_SIZE[1])]
+        
         return xy
+    
+    def create_new_states(self):
+        
+        while (1):
+            l = []
+            states = [self.xy_generator() for i in range(7)]
+            another = [x for x in states if x not in l and not l.append(x)]
+
+            if  len(states) == len(another):
+                break
+
+        states = [
+            states[0],
+            [x for x in states if states.index(x) > 0 and states.index(x) < 4],
+            [x for x in states if states.index(x) > 3]
+        ]
+
+        return states
     
     def xy_searcher(self,entity,map_data):
         y = 0
@@ -93,20 +110,25 @@ class Game:
             self.p_name = input("君の名前を教えて!\n→")
             self.j.dump({
                     "name":self.p_name,
-                    "state_data":["new"]
+                    "state_data":"new"
             })
             print("以下の名前でセーブデータを作成しました\n→",self.p_name)
 
     def preparation(self):
-        MAP_SIZE = [20,10]
-        Map = Map_Control(MAP_SIZE)
-        j = Json("setting.json").load()
-        self.state_data = j["state_data"][0]
 
-        self.map_data = Map.load(self.state_data)
-        entity_state = j["entity_state"]
+        MAP_SIZE = [20,10]
+        
+        self.Map = Map_Control(MAP_SIZE)
+        data = Json("setting.json").load()
+        self.state_data = data["state_data"]
+
+        if self.state_data == "new":
+            self.map_data = self.Map.load()
+        else:
+            self.map_data = self.Map.load(self.state_data)
+
         print("以下のマップをロードしました")
-        Map.draw(self.map_data)
+        self.Map.draw(self.map_data)
 
     def main(self):
         self.preparation()
@@ -133,8 +155,6 @@ class Game:
             if selector == "c":
                 input("終了します")
                 sys.exit()
-
-            continue
 
 if __name__ == "__main__":
     Game = Game()
