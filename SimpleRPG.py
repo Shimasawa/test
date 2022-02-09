@@ -29,11 +29,10 @@ class Map_Control:
         
         return map_data
     
-    def save(self,map_data,state_data):
+    def save(self,map_data):
         j =  Json("setting.json")
         Dict = j.load()
-        Dict["map_data"] = map_data
-        Dict["state_data"] = state_data
+        Dict["state_data"] = self.state_data_picker(map_data)
         Json("setting.json").dump(Dict)
 
     def draw(self,map_data):
@@ -66,6 +65,16 @@ class Map_Control:
         
         return xy
     
+    def state_data_picker(self,map_data):
+
+        state_data = [
+            self.xy_searcher("p",map_data)[0],
+            self.xy_searcher("e",map_data),
+            self.xy_searcher("i",map_data)
+        ]
+
+        return state_data
+
     def create_new_states(self):
         
         while (1):
@@ -86,18 +95,36 @@ class Map_Control:
     
     def xy_searcher(self,entity,map_data):
         y = 0
-
+        l = []
         for i in map_data:
             
             try:
                 xy = [i.index(entity),y]
-                break
+                l.append(xy)
             except ValueError:
                 pass
 
             y += 1
         
-        return xy
+        return l
+
+class Controller:
+    def __init__(self,map_data,MAP_CLASS):
+        self.Map = MAP_CLASS
+
+        while (1):
+            selector = input("w:上\ns:下\na:左\nd:右\nq:セーブしてタイトルに戻る\n→")
+            
+            if selector in ["w","a","s","d"]:
+                pass
+            
+            elif selector == "q":
+                self.Map.save(map_data)
+                input("セーブしました")
+                break
+
+            else:
+                input("無効な操作")
 
 class Game:    
     def __init__(self):
@@ -132,6 +159,8 @@ class Game:
 
     def main(self):
         self.preparation()
+        Controller(self.map_data,self.Map)
+
         
 
     def run(self):
