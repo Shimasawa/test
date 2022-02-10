@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import random
+import copy
 
 class Json:
     def __init__(self,Path):
@@ -91,18 +92,25 @@ class Map_Control:
             [x for x in states if states.index(x) > 3]
         ]
 
+        print(states)
+
         return states
     
     def xy_searcher(self,entity,map_data):
         y = 0
         l = []
-        for i in map_data:
+        copied_map_data = copy.deepcopy(map_data)
             
-            try:
-                xy = [i.index(entity),y]
-                l.append(xy)
-            except ValueError:
-                pass
+        for i in copied_map_data:
+        
+            while(1):
+                
+                try:
+                    xy = [i.index(entity),y]
+                    i[xy[0]] = "nodata"
+                    l.append(xy)
+                except ValueError:
+                    break
 
             y += 1
         
@@ -153,15 +161,13 @@ class Game:
             self.map_data = self.Map.load()
         else:
             self.map_data = self.Map.load(self.state_data)
-
+            
         print("以下のマップをロードしました")
         self.Map.draw(self.map_data)
 
     def main(self):
         self.preparation()
         Controller(self.map_data,self.Map)
-
-        
 
     def run(self):
         
