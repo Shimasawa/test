@@ -64,7 +64,14 @@ class Map_Control:
         
         return map_data
 
-    def xy_generator(self): #x,yの上限
+    def xy_generator(self):
+        """map_data_structure
+        map_data = [(y↓)
+            [floor_element,...(x→)],
+            [floor_element,...],
+            ...
+        ]
+        """
         xy = [random.randrange(self.MAP_SIZE[0]),random.randrange(self.MAP_SIZE[1])]
         
         return xy
@@ -81,6 +88,15 @@ class Map_Control:
         return state_data
 
     def create_new_states(self):
+        """state_data_structure
+        state_element = [y,x]
+        state_data = [
+            player_state,
+            [enemy_states],
+            [item_states],
+            [stairs_state(only one)]
+        ]
+        """
         
         while (1):
             l = []
@@ -120,24 +136,79 @@ class Map_Control:
             y += 1
         
         return l
+    
+    def state_judge(self,state):
+        
+        if state[1] < self.MAP_SIZE[0] and state[0] < self.MAP_SIZE[1]:
+
+            if state[0] >= 0 and state[1] >= 0:
+                
+                return False
+        return True
+        
+    
+    #ムーブで方向をリストに変換。エンティティ座標と照らし合わせて進行予定地を割り出す。
+    #その後judge関数で方向とエンティティ座標を受け取り、真偽判定
 
 class Controller:
-    def __init__(self,map_data,MAP_CLASS):
+    def __init__(self,map_data,state_data,MAP_CLASS):
         self.Map = MAP_CLASS
+        self.map_data = map_data
+        self.state_data = state_data
+
+    def menu(self):
 
         while (1):
+            
             selector = input("w:上\ns:下\na:左\nd:右\nq:セーブしてタイトルに戻る\n→")
             
             if selector in ["w","a","s","d"]:
-                pass
+                self.move(self.change_direction(selector))
             
             elif selector == "q":
-                self.Map.save(map_data)
+                self.Map.save(self.map_data)
                 input("セーブしました")
+
                 break
 
             else:
-                input("無効な操作")
+                input("無効な操作")        
+
+    def move(self,direction):
+        next_state = [self.state_data[0]+direction[0],self.state_data[1]+direction[1]]
+        
+    def enemy_move(self):
+        bad_states = [self.state_data[2],self.state_data[3]]
+
+        for xy in self.state_data[1]:
+            expect_direction = [
+                [xy[0]-1,xy[1]],[xy[0],xy[1]-1],[xy[0]+1,xy[1]],[xy[0],xy[1]+1]
+            ]
+
+            for i in expect_direction:
+                
+                if i in bad_states or self.Map.state_judge(i):
+                    expect_direction.remove(i)
+            next_state = random.choice([expect_direction])
+            bad_states.append(next_state)
+            
+
+
+    def change_direction(self,direction):
+
+        if direction == "w":
+            direction = [-1,0]
+        
+        elif direction == "a":
+            direction = [0,-1]
+        
+        elif direction == "s":
+            direction = [1,0]
+        
+        elif direction == "d":
+            direction = [0,1]
+        
+        return direction
 
 class Game:    
     def __init__(self):
@@ -172,7 +243,8 @@ class Game:
 
     def main(self):
         self.preparation()
-        Controller(self.map_data,self.Map)
+        controller = Controller(self.map_data,self.state_data,self.Map)
+        controller.menu()
 
     def run(self):
         
