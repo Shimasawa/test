@@ -59,6 +59,9 @@ class Map_Control:
         for xy in state_data[2]:
             map_data = self.add_entity(map_data,"i",xy)
         
+        for xy in state_data[3]:
+            map_data = self.add_entity(map_data,"s",xy)        
+        
         return map_data
 
     def xy_generator(self): #x,yの上限
@@ -71,7 +74,8 @@ class Map_Control:
         state_data = [
             self.xy_searcher("p",map_data)[0],
             self.xy_searcher("e",map_data),
-            self.xy_searcher("i",map_data)
+            self.xy_searcher("i",map_data),
+            self.xy_searcher("s",map_data)
         ]
 
         return state_data
@@ -89,7 +93,8 @@ class Map_Control:
         states = [
             states[0],
             [x for x in states if states.index(x) > 0 and states.index(x) < 4],
-            [x for x in states if states.index(x) > 3]
+            [x for x in states if states.index(x) > 3 and states.index(x) < 6],
+            [states[6]]
         ]
 
         print(states)
