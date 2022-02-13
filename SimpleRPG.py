@@ -65,7 +65,14 @@ class Map_Control:
         
         return map_data
 
-    def xy_generator(self): #x,yの上限
+    def xy_generator(self):
+        """map_data_structure
+        map_data = [(y↓)
+            [floor_element,...(x→)],
+            [floor_element,...],
+            ...
+        ]
+        """
         xy = [random.randrange(self.MAP_SIZE[0]),random.randrange(self.MAP_SIZE[1])]
         
         return xy
@@ -82,6 +89,15 @@ class Map_Control:
         return state_data
 
     def create_new_states(self):
+        """state_data_structure
+        state_element = [y,x]
+        state_data = [
+            player_state,
+            [enemy_states],
+            [item_states],
+            [stairs_state(only one)]
+        ]
+        """
         
         while (1):
             l = []
@@ -121,7 +137,6 @@ class Map_Control:
             y += 1
         
         return l
-<<<<<<< HEAD
     
     def state_judge(self,state):
         if state[0] < self.MAP_SIZE[0] and state[1] < self.MAP_SIZE[1]:
@@ -130,32 +145,31 @@ class Map_Control:
                 
                 return True
         return False
-=======
->>>>>>> b7e02804a3215ffab40c7e0f0bc9054be27e5853
 
 class Controller:
-    def __init__(self,map_data,MAP_CLASS):
+    def __init__(self,map_data,state_data,MAP_CLASS):
         self.Map = MAP_CLASS
+        self.map_data = map_data
+        self.state_data = state_data
+
+    def menu(self):
 
         while (1):
+            
             selector = input("w:上\ns:下\na:左\nd:右\nq:セーブしてタイトルに戻る\n→")
             
             if selector in ["w","a","s","d"]:
-<<<<<<< HEAD
                 self.move(self.change_direction(selector))
                 self.enemy_move()
                 self.Map.draw(self.Map.load(self.state_data))
-=======
-                pass
->>>>>>> b7e02804a3215ffab40c7e0f0bc9054be27e5853
             
             elif selector == "q":
-                self.Map.save(map_data)
+                self.Map.save(self.map_data)
                 input("セーブしました")
+
                 break
 
             else:
-<<<<<<< HEAD
                 input("無効な操作")        
 
     def move(self,direction):
@@ -191,9 +205,6 @@ class Controller:
             direction = [0,1]
         
         return direction
-=======
-                input("無効な操作")
->>>>>>> b7e02804a3215ffab40c7e0f0bc9054be27e5853
 
 class Game:    
     def __init__(self):
@@ -228,7 +239,8 @@ class Game:
 
     def main(self):
         self.preparation()
-        Controller(self.map_data,self.Map)
+        controller = Controller(self.map_data,self.state_data,self.Map)
+        controller.menu()
 
     def run(self):
         
