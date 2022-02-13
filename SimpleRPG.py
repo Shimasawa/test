@@ -1,3 +1,4 @@
+from hashlib import new
 import json
 import os
 import sys
@@ -138,17 +139,12 @@ class Map_Control:
         return l
     
     def state_judge(self,state):
-        
-        if state[1] < self.MAP_SIZE[0] and state[0] < self.MAP_SIZE[1]:
+        if state[0] < self.MAP_SIZE[0] and state[1] < self.MAP_SIZE[1]:
 
             if state[0] >= 0 and state[1] >= 0:
                 
-                return False
-        return True
-        
-    
-    #ムーブで方向をリストに変換。エンティティ座標と照らし合わせて進行予定地を割り出す。
-    #その後judge関数で方向とエンティティ座標を受け取り、真偽判定
+                return True
+        return False
 
 class Controller:
     def __init__(self,map_data,state_data,MAP_CLASS):
@@ -164,6 +160,8 @@ class Controller:
             
             if selector in ["w","a","s","d"]:
                 self.move(self.change_direction(selector))
+                self.enemy_move()
+                self.Map.draw(self.Map.load(self.state_data))
             
             elif selector == "q":
                 self.Map.save(self.map_data)
@@ -175,24 +173,22 @@ class Controller:
                 input("無効な操作")        
 
     def move(self,direction):
-        next_state = [self.state_data[0]+direction[0],self.state_data[1]+direction[1]]
+        next_state = [self.state_data[0][0]+direction[0],self.state_data[0][1]+direction[1]]
         
     def enemy_move(self):
-        bad_states = [self.state_data[2],self.state_data[3]]
+        bad_states = list(self.state_data[2]+self.state_data[3])
+        new_states = []
 
         for xy in self.state_data[1]:
-            expect_direction = [
-                [xy[0]-1,xy[1]],[xy[0],xy[1]-1],[xy[0]+1,xy[1]],[xy[0],xy[1]+1]
-            ]
-
-            for i in expect_direction:
-                
-                if i in bad_states or self.Map.state_judge(i):
-                    expect_direction.remove(i)
-            next_state = random.choice([expect_direction])
-            bad_states.append(next_state)
+            expect_direction = [x for x in [[xy[0]-1,xy[1]],[xy[0],xy[1]-1],[xy[0]+1,xy[1]],[xy[0],xy[1]+1]] if ((x not in bad_states) and self.Map.state_judge(x))]
             
-
+            try:
+                next_state = random.choice(expect_direction)
+                bad_states.append(next_state)
+                new_states.append(next_state)
+            except Exception:
+                new_states.append(xy)
+        self.state_data[1] = new_states
 
     def change_direction(self,direction):
 
@@ -269,5 +265,5 @@ class Game:
                 sys.exit()
 
 if __name__ == "__main__":
-    Game = Game()
-    Game.run()
+    game = Game()
+    game.run()
