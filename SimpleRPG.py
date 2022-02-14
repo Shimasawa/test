@@ -136,8 +136,8 @@ class Map_Control:
             y += 1
         
         return l
-    
-    def state_judge(self,state):
+
+    def judge_state(self,state):
         if state[0] < self.MAP_SIZE[0] and state[1] < self.MAP_SIZE[1]:
 
             if state[0] >= 0 and state[1] >= 0:
@@ -145,9 +145,9 @@ class Map_Control:
                 return True
         return False
 
-class Controller:
-    def __init__(self,map_data,state_data,MAP_CLASS):
-        self.Map = MAP_CLASS
+class Controller(Map_Control):
+    def __init__(self,map_data,state_data,MAP_SIZE):
+        super().__init__(MAP_SIZE)
         self.map_data = map_data
         self.state_data = state_data
 
@@ -158,12 +158,11 @@ class Controller:
             selector = input("w:上\ns:下\na:左\nd:右\nq:セーブしてタイトルに戻る\n→")
             
             if selector in ["w","a","s","d"]:
-                self.move(self.change_direction(selector))
-                self.enemy_move()
-                self.Map.draw(self.Map.load(self.state_data))
+                self.player_move(self.change_direction(selector)).enemy_move()
+                self.draw(self.load(self.state_data))
             
             elif selector == "q":
-                self.Map.save(self.map_data)
+                self.save(self.map_data)
                 input("セーブしました")
 
                 break
@@ -171,15 +170,18 @@ class Controller:
             else:
                 input("無効な操作")        
 
-    def move(self,direction):
+    def player_move(self,direction):
         next_state = [self.state_data[0][0]+direction[0],self.state_data[0][1]+direction[1]]
+        self.state_data[0] = next_state
+
+        return self
         
     def enemy_move(self):
         bad_states = list(self.state_data[2]+self.state_data[3])
         new_states = []
 
         for xy in self.state_data[1]:
-            expect_direction = [x for x in [[xy[0]-1,xy[1]],[xy[0],xy[1]-1],[xy[0]+1,xy[1]],[xy[0],xy[1]+1]] if ((x not in bad_states) and self.Map.state_judge(x))]
+            expect_direction = [x for x in [[xy[0]-1,xy[1]],[xy[0],xy[1]-1],[xy[0]+1,xy[1]],[xy[0],xy[1]+1]] if ((x not in bad_states) and self.judge_state(x))]
             
             try:
                 next_state = random.choice(expect_direction)
@@ -187,6 +189,7 @@ class Controller:
                 new_states.append(next_state)
             except Exception:
                 new_states.append(xy)
+
         self.state_data[1] = new_states
 
     def change_direction(self,direction):
@@ -222,9 +225,9 @@ class Game:
 
     def preparation(self):
 
-        MAP_SIZE = [20,10]
+        self.MAP_SIZE = [20,10]
         
-        self.Map = Map_Control(MAP_SIZE)
+        self.Map = Map_Control(self.MAP_SIZE)
         data = Json("setting.json").load()
         self.state_data = data["state_data"]
 
@@ -238,7 +241,7 @@ class Game:
 
     def main(self):
         self.preparation()
-        controller = Controller(self.map_data,self.state_data,self.Map)
+        controller = Controller(self.map_data,self.state_data,self.MAP_SIZE)
         controller.menu()
 
     def run(self):
