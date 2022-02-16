@@ -30,10 +30,15 @@ class Map_Control:
         
         return map_data
     
-    def save(self,map_data):
+    def save(self,data,state_mode=False): #デフォルトではマップデータから座標を抽出し保存する
         j =  Json("setting.json")
         Dict = j.load()
-        Dict["state_data"] = self.state_data_picker(map_data)
+
+        if state_mode:
+            Dict["state_data"] = data
+        else:
+            Dict["state_data"] = self.state_data_picker(data)
+        
         Json("setting.json").dump(Dict)
 
     def draw(self,map_data):
@@ -50,6 +55,7 @@ class Map_Control:
 
         if state_data == None:
             state_data = self.create_new_states()
+            self.save(state_data,True)
         
         map_data = self.generate(state_data[0])
         
@@ -158,8 +164,7 @@ class Controller(Map_Control):
             selector = input("w:上\ns:下\na:左\nd:右\nq:セーブしてタイトルに戻る\n→")
             
             if selector in ["w","a","s","d"]:
-                self.player_move(self.change_direction(selector)).enemy_move()
-                self.draw(self.load(self.state_data))
+                self.player_move(self.change_direction(selector)).enemy_move().draw(self.load(self.state_data))
             
             elif selector == "q":
                 self.save(self.map_data)
@@ -171,7 +176,9 @@ class Controller(Map_Control):
                 input("無効な操作")        
 
     def player_move(self,direction):
+        print(self.state_data[0],direction)
         next_state = [self.state_data[0][0]+direction[0],self.state_data[0][1]+direction[1]]
+        print(next_state)
         self.state_data[0] = next_state
 
         return self
@@ -192,19 +199,21 @@ class Controller(Map_Control):
 
         self.state_data[1] = new_states
 
+        return self
+
     def change_direction(self,direction):
 
         if direction == "w":
-            direction = [-1,0]
-        
-        elif direction == "a":
             direction = [0,-1]
         
+        elif direction == "a":
+            direction = [-1,0]
+        
         elif direction == "s":
-            direction = [1,0]
+            direction = [0,1]
         
         elif direction == "d":
-            direction = [0,1]
+            direction = [1,0]
         
         return direction
 
