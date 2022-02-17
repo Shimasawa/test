@@ -151,6 +151,7 @@ class Map_Control:
 
 class Controller(Map_Control):
     def __init__(self,map_data,state_data,MAP_SIZE):
+        self.MAP_SIZE = MAP_SIZE
         super().__init__(MAP_SIZE)
         self.map_data = map_data
         self.state_data = state_data
@@ -163,8 +164,9 @@ class Controller(Map_Control):
             
             if selector in ["w","a","s","d"]:
                 self.player_move(selector).enemy_move().draw(self.load(self.state_data))
-                event = Event_handler()
-                event.on_encount(self.state_data)
+                event = Event_handler(self.MAP_SIZE,self.state_data)
+                self.state_data = event.on_event(self.state_data)
+
             elif selector == "q":
                 self.save(self.state_data,state_mode=True)
                 input("セーブしました")
@@ -235,8 +237,12 @@ class Controller(Map_Control):
         
         return direction
 
-class Event_handler:
-    def on_encount(self,state_data):
+class Event_handler(Map_Control):
+    def __init__(self,MAP_SIZE,state_data):
+        super().__init__(MAP_SIZE)
+        self.state_data = state_data
+
+    def on_event(self,state_data):
         
         if state_data[0] in state_data[1]:
             print("敵に接触")
@@ -246,6 +252,24 @@ class Event_handler:
         
         elif state_data[0] in state_data[3]:
             print("階段に接触")
+            self.on_change_floor()
+        
+        else:
+            pass
+
+        return self.state_data
+
+    def on_encount(self):
+        pass
+
+    def on_pick_item(self):
+        pass
+
+    def on_change_floor(self):
+        map_data = self.load()
+        self.state_data = self.state_data_picker(map_data)
+        self.draw(map_data)
+        input("階段を上り、一階層上に来ました")
 
 class Game:    
     def __init__(self):
