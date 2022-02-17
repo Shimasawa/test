@@ -5,8 +5,8 @@ import random
 import copy
 
 class Json:
-    def __init__(self,Path):
-        self.Path = os.path.join(os.path.dirname(__file__),"data",Path)
+    def __init__(self,file_name):
+        self.Path = os.path.join(os.path.dirname(__file__),"data",file_name)
 
     def load(self):
         
@@ -24,13 +24,20 @@ class Map_Control:
     def __init__(self,MAP_SIZE):
         self.MAP_SIZE = MAP_SIZE
 
-    def generate(self,p_xy):#プレイヤーの座標
-        map_data = [["+" for i in range(self.MAP_SIZE[0])] for raw in range(self.MAP_SIZE[1])]
-        map_data = self.add_entity(map_data,"p",p_xy)
+    def generate(self,player_state):
+        """map_data_structure
+        map_data = [(y↓)
+            [floor_element,...(x→)],
+            [floor_element,...],
+            ...
+        ]
+        """ 
+        #y軸は下が正の方向、x軸は右が正の方向
+        map_data = self.add_entity([["+" for i in range(self.MAP_SIZE[0])] for raw in range(self.MAP_SIZE[1])],"p",player_state)
         
         return map_data
     
-    def save(self,data,state_mode=False): #デフォルトではマップデータから座標を抽出し保存する
+    def save(self,data,state_mode=False): #state_modeにTrueを渡すとdataをstate_dataとして扱い、記録を行う
         j =  Json("setting.json")
         Dict = j.load()
 
@@ -39,15 +46,15 @@ class Map_Control:
         else:
             Dict["state_data"] = self.state_data_picker(data)
         
-        Json("setting.json").dump(Dict)
+        j.dump(Dict)
 
     def draw(self,map_data):
         
         for i in map_data:
-            print("".join(i))
+            print("".join(i)) #列は連結していない
 
     def add_entity(self,map_data,entity,xy):
-        map_data[xy[1]][xy[0]] = entity
+        map_data[xy[1]][xy[0]] = entity #座標の探索はy軸、x軸の順
 
         return map_data
     
@@ -58,7 +65,7 @@ class Map_Control:
             self.save(state_data,True)
         
         map_data = self.generate(state_data[0])
-        
+    
         for xy in state_data[1]:
             map_data = self.add_entity(map_data,"e",xy)
         
@@ -71,13 +78,6 @@ class Map_Control:
         return map_data
 
     def xy_generator(self):
-        """map_data_structure
-        map_data = [(y↓)
-            [floor_element,...(x→)],
-            [floor_element,...],
-            ...
-        ]
-        """
         xy = [random.randrange(self.MAP_SIZE[0]),random.randrange(self.MAP_SIZE[1])]
         
         return xy
@@ -119,13 +119,11 @@ class Map_Control:
             [states[6]]
         ]
 
-        print(states)
-
         return states
     
     def xy_searcher(self,entity,map_data):
         y = 0
-        l = []
+        xy_list = []
         copied_map_data = copy.deepcopy(map_data)
             
         for i in copied_map_data:
@@ -135,13 +133,13 @@ class Map_Control:
                 try:
                     xy = [i.index(entity),y]
                     i[xy[0]] = "nodata"
-                    l.append(xy)
+                    xy_list.append(xy)
                 except ValueError:
                     break
 
             y += 1
         
-        return l
+        return xy_list
 
     def judge_state(self,state):
         if state[0] < self.MAP_SIZE[0] and state[1] < self.MAP_SIZE[1]:
@@ -164,8 +162,9 @@ class Controller(Map_Control):
             selector = input("w:上\ns:下\na:左\nd:右\nq:セーブしてタイトルに戻る\n→")
             
             if selector in ["w","a","s","d"]:
-                self.player_move(self.change_direction(selector)).enemy_move().draw(self.load(self.state_data))
-            
+                self.player_move(selector).enemy_move().draw(self.load(self.state_data))
+                event = Event_handler()
+                event.on_encount(self.state_data)
             elif selector == "q":
                 self.save(self.map_data)
                 input("セーブしました")
@@ -176,10 +175,22 @@ class Controller(Map_Control):
                 input("無効な操作")        
 
     def player_move(self,direction):
-        print(self.state_data[0],direction)
-        next_state = [self.state_data[0][0]+direction[0],self.state_data[0][1]+direction[1]]
-        print(next_state)
-        self.state_data[0] = next_state
+        while(1):
+            
+            while(1):
+
+                try:
+                    direction = self.change_direction(direction)
+                    break
+                except Exception:
+                    direction = input("無効な操作です。もう一度移動可能な方向の中から選択してください。\n→")
+
+            next_state = [self.state_data[0][0]+direction[0],self.state_data[0][1]+direction[1]]
+            if self.judge_state(next_state):
+                self.state_data[0] = next_state
+                break
+            else:
+                direction = input("その方向には移動できません。もう一度移動可能な方向の中から選択してください。\n→")
 
         return self
         
@@ -188,7 +199,9 @@ class Controller(Map_Control):
         new_states = []
 
         for xy in self.state_data[1]:
-            expect_direction = [x for x in [[xy[0]-1,xy[1]],[xy[0],xy[1]-1],[xy[0]+1,xy[1]],[xy[0],xy[1]+1]] if ((x not in bad_states) and self.judge_state(x))]
+
+            #移動方向の候補はwasdの順に記述している
+            expect_direction = [x for x in [[xy[0],xy[1]-1],[xy[0]-1,xy[1]],[xy[0],xy[1]+1],[xy[0]+1,xy[1]]] if ((x not in bad_states) and self.judge_state(x))]
             
             try:
                 next_state = random.choice(expect_direction)
@@ -217,6 +230,11 @@ class Controller(Map_Control):
         
         return direction
 
+class Event_handler:
+    def on_encount(self,state_data):
+        if state_data[0] in (state_data[1]+state_data[2]+state_data[3]):
+            input("何かに接触しています")
+
 class Game:    
     def __init__(self):
         self.j = Json("setting.json")
@@ -233,8 +251,8 @@ class Game:
             print("以下の名前でセーブデータを作成しました\n→",self.p_name)
 
     def preparation(self):
-
-        self.MAP_SIZE = [20,10]
+        
+        self.MAP_SIZE = [20,10] #[x,y]
         
         self.Map = Map_Control(self.MAP_SIZE)
         data = Json("setting.json").load()
