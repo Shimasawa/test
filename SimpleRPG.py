@@ -166,7 +166,7 @@ class Controller(Map_Control):
                 event = Event_handler()
                 event.on_encount(self.state_data)
             elif selector == "q":
-                self.save(self.map_data)
+                self.save(self.state_data,state_mode=True)
                 input("セーブしました")
 
                 break
@@ -186,11 +186,13 @@ class Controller(Map_Control):
                     direction = input("無効な操作です。もう一度移動可能な方向の中から選択してください。\n→")
 
             next_state = [self.state_data[0][0]+direction[0],self.state_data[0][1]+direction[1]]
+
             if self.judge_state(next_state):
                 self.state_data[0] = next_state
                 break
             else:
                 direction = input("その方向には移動できません。もう一度移動可能な方向の中から選択してください。\n→")
+
 
         return self
         
@@ -228,12 +230,22 @@ class Controller(Map_Control):
         elif direction == "d":
             direction = [1,0]
         
+        else:
+            raise Exception("予期しない引数")
+        
         return direction
 
 class Event_handler:
     def on_encount(self,state_data):
-        if state_data[0] in (state_data[1]+state_data[2]+state_data[3]):
-            input("何かに接触しています")
+        
+        if state_data[0] in state_data[1]:
+            print("敵に接触")
+        
+        elif state_data[0] in state_data[2]:
+            print("アイテムに接触")
+        
+        elif state_data[0] in state_data[3]:
+            print("階段に接触")
 
 class Game:    
     def __init__(self):
