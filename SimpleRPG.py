@@ -3,6 +3,7 @@ import os
 import sys
 import random
 import copy
+from typing import Dict
 
 class Json:
     def __init__(self,file_name):
@@ -245,7 +246,10 @@ class Event_handler(Map_Control):
     def on_event(self,state_data):
         
         if state_data[0] in state_data[1]:
-            print("敵に接触")
+            battle = Battle()
+            battle.start()
+            self.state_data[1].remove(state_data[0])
+            
         
         elif state_data[0] in state_data[2]:
             print("アイテムに接触")
@@ -259,17 +263,81 @@ class Event_handler(Map_Control):
 
         return self.state_data
 
-    def on_encount(self):
-        pass
-
     def on_pick_item(self):
-        pass
+        j = Json("player_status")
+        Dict = j.load()
+        Dict["hp"] += 10
+
+        if Dict["hp"] > 100:
+            Dict["hp"] = 100
+        
+        j.dump(Dict)
+        
+        print("hpが100回復した!")
 
     def on_change_floor(self):
         map_data = self.load()
         self.state_data = self.state_data_picker(map_data)
         self.draw(map_data)
+        
         input("階段を上り、一階層上に来ました")
+
+class Battle:
+    def __init__(self):
+        self.player_json = Json("player_status.json")
+        self.enemy_dict = Json("enemy_status.json").load()
+
+    def start(self):
+        print(self.enemy["name"],"が現れた!")
+        
+        while(1):
+            selector = input("a:攻撃\n→")
+            
+            if selector == "a":
+
+                print(self.player_name,"の攻撃!")
+                
+                self.enemy["hp"] -= self.player["attack"]
+                
+                print("{}は{}に{}ダメージ与えた!".format(self.player_name,self.enemy["name"],self.player["attack"]))
+
+                
+                if self.enemy["hp"] < 0:
+                    self.win().confirm_data()
+                    break
+                else:
+                    print("無効な操作")
+                    continue    
+            
+            print(self.enemy["name"],"の攻撃!")
+            print("{}は{}ダメージくらった!".format(self.player_name,self.enemy["attack"]))
+
+            if self.player["hp"] < 0:
+                self.lose()
+
+            print("{}の体力:{}\n{}の体力:{}".format(self.player_name,self.player["hp"],self.enemy["name"],self.enemy["hp"]))
+
+    def choose_info(self):
+        self.enemy = random.choice(list(self.enemy_dict.keys()))
+        self.player = self.player_json.load()
+        self.player_name = Json("setting.json").load()["name"]
+    
+    def confirm_data(self):
+        self.player_json.dump(self.player)
+
+    def win(self):
+        
+            print("{}は{}に勝利した!(score+100)".format(self.player_name,self.enemy["name"]))
+              
+            self.player["score"] += 100
+            
+            return self
+
+    def lose(self):
+            print("{}は力尽きてしまった...".format(self.player_name))
+            Json("setting.json").dump({})
+            input("終了します")
+            sys.exit()
 
 class Game:    
     def __init__(self):
