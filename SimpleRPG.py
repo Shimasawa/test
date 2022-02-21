@@ -160,7 +160,7 @@ class Controller(Map_Control):
     def menu(self):
 
         while (1):
-            
+            self.draw(self.load(self.state_data))
             selector = input("w:上\ns:下\na:左\nd:右\nq:セーブしてタイトルに戻る\n→")
             
             if selector in ["w","a","s","d"]:
@@ -252,6 +252,7 @@ class Event_handler(Map_Control):
             
         
         elif state_data[0] in state_data[2]:
+            self.on_pick_item()
             print("アイテムに接触")
         
         elif state_data[0] in state_data[3]:
@@ -264,7 +265,7 @@ class Event_handler(Map_Control):
         return self.state_data
 
     def on_pick_item(self):
-        j = Json("player_status")
+        j = Json("player_status.json")
         Dict = j.load()
         Dict["hp"] += 10
 
@@ -272,6 +273,8 @@ class Event_handler(Map_Control):
             Dict["hp"] = 100
         
         j.dump(Dict)
+        self.state_data[2].remove(self.state_data[0])
+        self.save(self.state_data,state_mode=True)
         
         print("hpが100回復した!")
 
@@ -288,9 +291,11 @@ class Battle:
         self.enemy_dict = Json("enemy_status.json").load()
 
     def start(self):
-        print(self.enemy["name"],"が現れた!")
+        self.choose_info()
+        print(str(self.enemy["name"]),"が現れた!")
         
         while(1):
+            print("{}:HP{}\n{}:HP{}".format(self.player_name,self.player["hp"],self.enemy["name"],self.enemy["hp"]))
             selector = input("a:攻撃\n→")
             
             if selector == "a":
@@ -305,9 +310,9 @@ class Battle:
                 if self.enemy["hp"] < 0:
                     self.win().confirm_data()
                     break
-                else:
-                    print("無効な操作")
-                    continue    
+            else:
+                print("無効な操作")
+                continue    
             
             print(self.enemy["name"],"の攻撃!")
             print("{}は{}ダメージくらった!".format(self.player_name,self.enemy["attack"]))
@@ -318,7 +323,8 @@ class Battle:
             print("{}の体力:{}\n{}の体力:{}".format(self.player_name,self.player["hp"],self.enemy["name"],self.enemy["hp"]))
 
     def choose_info(self):
-        self.enemy = random.choice(list(self.enemy_dict.keys()))
+        self.enemy_id = random.choice(list(self.enemy_dict.keys()))
+        self.enemy = self.enemy_dict[self.enemy_id]
         self.player = self.player_json.load()
         self.player_name = Json("setting.json").load()["name"]
     
@@ -327,7 +333,7 @@ class Battle:
 
     def win(self):
         
-            print("{}は{}に勝利した!(score+100)".format(self.player_name,self.enemy["name"]))
+            input("{}は{}に勝利した!(score+100)".format(self.player_name,self.enemy["name"]))
               
             self.player["score"] += 100
             
