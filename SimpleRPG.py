@@ -160,7 +160,6 @@ class Controller(Map_Control):
     def menu(self):
 
         while (1):
-            self.draw(self.load(self.state_data))
             selector = input("w:上\ns:下\na:左\nd:右\nq:セーブしてタイトルに戻る\n→")
             
             if selector in ["w","a","s","d"]:
@@ -289,9 +288,12 @@ class Battle:
     def __init__(self):
         self.player_json = Json("player_status.json")
         self.enemy_dict = Json("enemy_status.json").load()
+        self.enemy_id = random.choice(list(self.enemy_dict.keys()))
+        self.enemy = self.enemy_dict[self.enemy_id]
+        self.player = self.player_json.load()
+        self.player_name = Json("setting.json").load()["name"]
 
     def start(self):
-        self.choose_info()
         print(str(self.enemy["name"]),"が現れた!")
         
         while(1):
@@ -315,6 +317,7 @@ class Battle:
                 continue    
             
             print(self.enemy["name"],"の攻撃!")
+            self.player["hp"] -= self.enemy["attack"]
             print("{}は{}ダメージくらった!".format(self.player_name,self.enemy["attack"]))
 
             if self.player["hp"] < 0:
@@ -322,12 +325,6 @@ class Battle:
 
             print("{}の体力:{}\n{}の体力:{}".format(self.player_name,self.player["hp"],self.enemy["name"],self.enemy["hp"]))
 
-    def choose_info(self):
-        self.enemy_id = random.choice(list(self.enemy_dict.keys()))
-        self.enemy = self.enemy_dict[self.enemy_id]
-        self.player = self.player_json.load()
-        self.player_name = Json("setting.json").load()["name"]
-    
     def confirm_data(self):
         self.player_json.dump(self.player)
 
@@ -357,6 +354,14 @@ class Game:
             self.j.dump({
                     "name":self.p_name,
                     "state_data":"new"
+            })
+            Json("player_status.json").dump({
+                    "hp": 100,
+                    "attack": 20,
+                    "defense": 0,
+                    "level": 0,
+                    "floor": 0,
+                    "score": 0
             })
             print("以下の名前でセーブデータを作成しました\n→",self.p_name)
 

@@ -1,8 +1,8 @@
 {
   "hp": 100,
-  "attack": 5,
+  "attack": 20,
   "defense": 0,
   "level": 0,
   "floor": 0,
-  "score": 200
+  "score": 100
 }
