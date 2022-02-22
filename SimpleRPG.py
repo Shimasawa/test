@@ -3,7 +3,6 @@ import os
 import sys
 import random
 import copy
-from typing import Dict
 
 class Json:
     def __init__(self,file_name):
@@ -317,7 +316,9 @@ class Battle:
                 continue    
             
             print(self.enemy["name"],"の攻撃!")
+
             self.player["hp"] -= self.enemy["attack"]
+
             print("{}は{}ダメージくらった!".format(self.player_name,self.enemy["attack"]))
 
             if self.player["hp"] < 0:
@@ -350,6 +351,7 @@ class Game:
             self.p_name = self.j.load()['name']
             print("以下の名前のセーブデータを読み込みました\n→",self.p_name)
         except:
+            input("現配布段階では未実装箇所やデバッグが済んでいない箇所が多く、バグが含まれている可能性が高いです。\nよければ開発者まで、状況を伝えてもらえると助かります。")
             self.p_name = input("君の名前を教えて!\n→")
             self.j.dump({
                     "name":self.p_name,
